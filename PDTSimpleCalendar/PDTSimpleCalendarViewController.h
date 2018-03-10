@@ -154,4 +154,10 @@
  */
 - (UIColor *)simpleCalendarViewController:(PDTSimpleCalendarViewController *)controller textColorForDate:(NSDate *)date;
 
+/**
+ * Asks the delegate is selected color for date
+ */
+- (BOOL)simpleCalendarViewController:(PDTSimpleCalendarViewController *)controller
+              isSelectedColorForDate:(NSDate *)date;
+
 @end;

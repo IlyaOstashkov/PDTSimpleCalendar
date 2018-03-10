@@ -121,4 +121,9 @@
  */
 - (void)refreshCellColors;
 
+/**
+ *  Set just selected color
+ */
+- (void)setSelectedColor;
+
 @end

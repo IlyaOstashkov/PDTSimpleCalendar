@@ -212,13 +212,11 @@ static const NSCalendarUnit kCalendarUnitYMD = NSCalendarUnitYear | NSCalendarUn
 
     _selectedDate = startOfDay;
 
-    NSIndexPath *indexPath = [self indexPathForCellAtDate:_selectedDate];
-    [self.collectionView reloadItemsAtIndexPaths:@[ indexPath ]];
-
     //Notify the delegate
     if ([self.delegate respondsToSelector:@selector(simpleCalendarViewController:didSelectDate:)]) {
         [self.delegate simpleCalendarViewController:self didSelectDate:self.selectedDate];
     }
+    [self.collectionView reloadData];
 }
 
 #pragma mark - Scroll to a specific date
@@ -359,52 +357,64 @@ static const NSCalendarUnit kCalendarUnitYMD = NSCalendarUnitYear | NSCalendarUn
 {
     PDTSimpleCalendarViewCell *cell = [self.collectionView dequeueReusableCellWithReuseIdentifier:PDTSimpleCalendarViewCellIdentifier
                                                                                      forIndexPath:indexPath];
-
+    
     cell.delegate = self;
     
     NSDate *firstOfMonth = [self firstOfMonthForSection:indexPath.section];
     NSDate *cellDate = [self dateForCellAtIndexPath:indexPath];
-
+    
     NSDateComponents *cellDateComponents = [self.calendar components:kCalendarUnitYMD fromDate:cellDate];
     NSDateComponents *firstOfMonthsComponents = [self.calendar components:kCalendarUnitYMD fromDate:firstOfMonth];
-
+    
     BOOL isToday = NO;
     BOOL isSelected = NO;
     BOOL isCustomDate = NO;
-
-    if (cellDateComponents.month == firstOfMonthsComponents.month) {
+    
+    BOOL isSelectedColor = NO;
+    if ([_delegate respondsToSelector:@selector(simpleCalendarViewController:isSelectedColorForDate:)])
+        isSelectedColor = [self.delegate simpleCalendarViewController:self
+                                               isSelectedColorForDate:cellDate];
+    
+    if (cellDateComponents.month == firstOfMonthsComponents.month)
+    {
         isSelected = ([self isSelectedDate:cellDate] && (indexPath.section == [self sectionForDate:cellDate]));
         isToday = [self isTodayDate:cellDate];
         [cell setDate:cellDate calendar:self.calendar];
-
+        
         //Ask the delegate if this date should have specific colors.
         if ([self.delegate respondsToSelector:@selector(simpleCalendarViewController:shouldUseCustomColorsForDate:)]) {
             isCustomDate = [self.delegate simpleCalendarViewController:self shouldUseCustomColorsForDate:cellDate];
         }
-
-
-    } else {
+        
+        if (isSelectedColor)
+            [cell setSelectedColor];
+    }
+    else
+    {
         [cell setDate:nil calendar:nil];
     }
-
-    if (isToday) {
+    
+    if (isToday &&
+        !isSelectedColor)
+    {
         [cell setIsToday:isToday];
     }
-
-    if (isSelected) {
+    
+    if (isSelected)
+    {
         [cell setSelected:isSelected];
     }
-
+    
     //If the current Date is not enabled, or if the delegate explicitely specify custom colors
     if (![self isEnabledDate:cellDate] || isCustomDate) {
         [cell refreshCellColors];
     }
-
+    
     //We rasterize the cell for performances purposes.
     //The circle background is made using roundedCorner which is a super expensive operation, specially with a lot of items on the screen to display (like we do)
     cell.layer.shouldRasterize = YES;
     cell.layer.rasterizationScale = [UIScreen mainScreen].scale;
-
+    
     return cell;
 }
 
